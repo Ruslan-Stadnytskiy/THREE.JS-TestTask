@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+          name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <title>TestTask</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .info-panel {
+            display: none;
+            justify-content: space-around;
+            transition: 0.4s;
+            position: fixed;
+            bottom: 3vh;
+            left: 25vw;
+            z-index: 1;
+            padding: 1em 1.5em;
+            width: 50vw;
+            color: #fff;
+            background: rgb(47, 164, 254);
+            border-radius: .5em;
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .info-panel img {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            transition: .2s;
+        }
+
+        #info-panel img:hover {
+            transition: .2s;
+            border: 2px solid #dbdada;
+        }
+    </style>
+</head>
+<body>
+<div class="info-panel">
+    <p id="info-text"></p>
+    <img alt="Close" id="close-btn" src="Assets/UI/Close%20icon@3x.png">
+</div>
+<script type="module">
+    import * as THREE from './three.js-master/build/three.module.js'
+    import {OrbitControls} from
+            './three.js-master/examples/jsm/controls/OrbitControls.js'
+    import {GLTFLoader} from
+            './three.js-master/examples/jsm/loaders/GLTFLoader.js'
+    // import {GLTFExporter} from
+    //         './js/GLTFExporter.js';
+
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    //CAMERA
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth /
+        window.innerHeight, 0.25, 2000);
+    camera.position.set(40, 20, 95);
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color("rgb(221,220,220)")
+    scene.add(camera)
+
+
+    //Add Controls
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.enabled = true;
+
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 2.0;
+    controls.update();
+
+    //LIGHTS
+
+    const color = 0xFFFFFF;
+    const intensity = 0.8;
+    const light = new THREE.AmbientLight(color, intensity);
+    scene.add(light);
+
+    const pointLight = new THREE.PointLight(0xFFFFFF, 1);
+    pointLight.position.set(-60, 140, 70)
+    pointLight.castShadow = true;
+    scene.add(pointLight)
+    pointLight.shadow.mapSize.width = 512;
+    pointLight.shadow.mapSize.height = 512;
+    pointLight.shadow.camera.near = 0.5;
+    pointLight.shadow.camera.far = 500;
+    pointLight.shadow.radius = 8;
+
+    //SKULL IMPLEMENT
+    const loader = new GLTFLoader();
+
+    loader.load('./Assets/skullGLTF/scene.gltf', function (gltf) {
+        const SkullScene = gltf.scene
+        SkullScene.position.set(0, 0, 0)
+        SkullScene.scale.set(20, 20, 20)
+        SkullScene.traverse(function (child) {
+            child.castShadow = true;
+        })
+        scene.add(SkullScene);
+
+    })
+    const PlaneGeometry = new THREE.PlaneGeometry(100, 100)
+    const PlaneTexture = new THREE.MeshLambertMaterial({
+        color: '#d0cfcf',
+        side: THREE.DoubleSide
+    })
+    const Plane = new THREE.Mesh(PlaneGeometry, PlaneTexture)
+    scene.add(Plane)
+    Plane.receiveShadow = true;
+    Plane.rotation.x = Math.PI * 0.5
+    Plane.position.set(0, -30, 0)
+    camera.lookAt(0, 0, 0)
+
+
+    //Sprites
+
+    const textureLoader = new THREE.TextureLoader()
+    const radial1 = textureLoader.load('./Assets/UI/Radial1.png')
+    const spriteMaterial1 = new THREE.SpriteMaterial({
+        map: radial1
+    })
+    const sprite1 = new THREE.Sprite(spriteMaterial1);
+    sprite1.position.set(15, -3, 1)
+    sprite1.scale.set(4, 4, 4)
+    sprite1.name = '1'
+
+
+    const radial2 = textureLoader.load('./Assets/UI/Radial2.png')
+    const spriteMaterial2 = new THREE.SpriteMaterial({
+        map: radial2
+    })
+    const sprite2 = new THREE.Sprite(spriteMaterial2);
+    sprite2.position.set(0, 0, 21)
+    sprite2.scale.set(4, 4, 4)
+    sprite2.name = '2'
+
+
+    const radial3 = textureLoader.load('./Assets/UI/Radial3.png')
+    const spriteMaterial3 = new THREE.SpriteMaterial({
+        map: radial3
+    })
+    const sprite3 = new THREE.Sprite(spriteMaterial3);
+    sprite3.position.set(12, 22, -8)
+    sprite3.scale.set(4, 4, 4)
+    sprite3.name = '3'
+
+    scene.add(sprite1, sprite2, sprite3);
+
+    //Raycaster
+
+    const
+        infoCards = ['Lorem ipsum dolor sit amet, ipsum dolor sit consectetur' +
+        ' adipisicing elit.Nam  1',
+            'Lorem ipsum dolor sit amet, consectetur adipisicing elit.' +
+            'Nam consectetur adipisicing elit.Nam  2',
+            'Lorem ipsum dolor sit amet,ipsum dolor sit amet consectetur' +
+            'ipsum dolor sit adipisicing elit.Nam  3']
+    const closeBtn = document.getElementById('close-btn')
+    const panel = document.querySelector('.info-panel')
+    const infoText = document.getElementById('info-text')
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    renderer.domElement.addEventListener("click", event => {
+
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        let intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects[0].object.type === 'Sprite') {
+            console.log(intersects[0].object.name)
+            infoText.innerText = infoCards[intersects[0].object.name - 1]
+            panel.style.display = 'flex'
+        }
+    });
+    closeBtn.addEventListener('click', () => panel.style.display = 'none')
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    //Window ReSize
+
+    window.addEventListener('resize', onWindowResize);
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        animate();
+    }
+
+
+</script>
+</body>
+</html>
